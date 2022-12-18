@@ -1,0 +1,13 @@
+(* Prove that the given bitstring is reachable *)
+
+free c: channel.
+
+free reachable: bitstring [private].
+free unreachable: bitstring [private].
+
+query attacker(reachable).
+query attacker(unreachable).
+
+process
+    out(c, reachable).
+    0.
