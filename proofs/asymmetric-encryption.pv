@@ -1,0 +1,11 @@
+(* Asymmetric Encrption primitive *)
+
+type skey. (* secret key *)
+type pkey. (* public key *)
+
+(* Constructor *)
+fun pk(skey): pkey.
+fun enc(bitstring, pkey): bitstring.
+
+(* Destructor *)
+reduc forall m: bistring, k: skey; dec(enc(m, pk(k)), k) = m.

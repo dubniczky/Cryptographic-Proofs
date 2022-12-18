@@ -1,0 +1,7 @@
+(* Symmetric Encrption primitive *)
+
+type key.
+
+fun enc(bitstring, key): bistring.
+
+reduc forall m: bistring, k: key; dec(enc(m, k), k) = m.
