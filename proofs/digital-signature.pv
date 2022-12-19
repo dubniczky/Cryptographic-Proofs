@@ -3,7 +3,7 @@
 type skey.
 type pkey.
 
-fun pk(sskey): pkey.
+fun pk(skey): pkey.
 fun sign(bitstring, skey): bitstring.
 
 reduc forall m: bitstring, k: skey; getmess(sign(m, k)) = m.
