@@ -2,9 +2,6 @@ proverif_version="2.04"
 target_folder="./proverif"
 proverif_folder="./proverif/proverif$proverif_version"
 
-## TODO
-rm -rf $target_folder
-
 # Check target folder
 if [ -d "$target_folder" ]; then
     echo "Target folder $target_folder already exists. Please remove it to reinstall."
