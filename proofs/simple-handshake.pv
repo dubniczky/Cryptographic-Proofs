@@ -1,0 +1,57 @@
+(* Formal proof of the simple handshake protocol *)
+
+
+(* Symmetric key *)
+type key.
+(* Asymmetric key pair *)
+type pkey.
+type skey.
+(* Asymmetric signature key pair *)
+type spkey.
+type sskey.
+
+
+(* Symmetric encription primitives *)
+fun senc(bitstring, key): bistring.
+reduc forall m: bistring, k: key; sdec(senc(m, k), k) = m.
+
+(* Asymmetric encription primitives *)
+fun pk(skey): pkey.
+fun aenc(bitstring, pkey): bitstring.
+reduc forall m: bistring, k: skey; adec(aenc(m, pk(k)), k) = m.
+
+(* Digital signature primitives *)
+fun spk(sskey): pkey.
+fun ssign(bitstring, skey): bitstring.
+reduc forall m: bitstring, k: skey; getmess(ssign(m, k)) = m.
+reduc forall m: bitstring, k: skey; verify(ssign(m, k), spk(k)) = m.
+
+
+(* Processes *)
+let A(pkA: pkey, skA: skey, pkb: spkey) =
+    out(c, pkA);
+    in(c, x: bitstring);
+    let y = adec(x, skA) in
+    let (=pkB, s: key) = checksign(y, pkB) in
+    out(c, senc(m, s))
+
+let B(pkB: spkey, skB: sskey) =
+    in(c, pkX: pkey);
+    new s: key;
+    out(c, aenc(sign((pkB, s), skB), pkX));
+    in(c, x: bitstring);
+    let z = sdec(x, s) in
+    0.
+
+
+(* Main process *)
+process
+    new skA: skey;
+    new ksB: skey;
+    let pkA = pk(skA) in out(c, pkA);
+    let pkB = spk(skB) in out(c, pkB);
+    ((!A(pkA, skA, pkB)) | (!B(pkB, skB)))
+
+
+(* Secrecy property *)
+query attacker(m)
