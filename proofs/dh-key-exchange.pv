@@ -1,0 +1,28 @@
+(* Formal proof of Diffie-Hellman key exchange protocol *)
+
+free s: bitstring [private].
+
+
+(* Secrecy property *)
+query attacker(s).
+
+
+(* Processes *)
+let A() =
+    new a: exponent;
+    out(c,exp(g, a));
+    in(c,yb: G);
+    let k = exp(yb, a) in
+    out(c, enc(s,k)).
+
+let B() =
+    in(c, ya: G);
+    new b: exponent;
+    let k = exp(ya, b) in out(c,exp(g, b));
+    in (c,m: bitstring);
+    let s2 = dec(m,k) in 0.
+
+
+(* Main process *)
+process
+    ((!A()) | (!B()))
