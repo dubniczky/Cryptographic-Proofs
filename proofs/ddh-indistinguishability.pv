@@ -1,0 +1,16 @@
+(* Formal proof of Decisional Diffie-Hellman key exchange indistinguishability *)
+
+
+free h: channel. type G.
+type exponent. const g: G [data].
+
+
+(* Exponentiation *)
+fun exp(G, exponent): G.
+equation forall x: exponent, y: exponent; exp(exp(g,x),y) = exp(exp(g,y),x).
+
+
+(* Main process *)
+process
+    new a: exponent; new b: exponent; new c: exponent;
+    out(h, (exp(g,a), exp(g,b), choice[exp(exp(g,a),b), exp(g,c)]))
