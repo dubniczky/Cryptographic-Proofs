@@ -1,0 +1,150 @@
+(* 
+Needham-Schroeder public key protocol;
+
+Message 1: A -> S : (A, B) Message
+Message 2: S -> A : { pkB, B }skS Message
+Message 3: A -> B : { Na, A }pkB Message
+Message 4: B -> S : (B, A) Message
+Message 5: S -> B : { pkA, A }skS Message
+Message 6: B -> A : { Na, Nb }pkA Message
+Message 7: A -> B : { Nb }pkB Message
+*)
+
+
+free c: channel.
+
+type host.
+type nonce.
+type pkey.
+type skey.
+type spkey.
+type sskey.
+
+free A, B: host.
+table keys(host, pkey).
+
+
+(* Converter *)
+fun nonce_to_bitstring(nonce): bitstring [data, typeConverter].
+
+
+(* Public key encryption primitives *)
+fun pk(skey): pkey.
+fun encrypt(bitstring, pkey): bitstring.
+reduc forall x: bitstring, y: skey; decrypt(encrypt(x,pk(y)),y) = x.
+
+(* Signature primitives *)
+fun spk(sskey): spkey.
+fun sign(bitstring, sskey): bitstring.
+reduc forall m: bitstring, k: sskey; getmess(sign(m,k)) = m.
+reduc forall m: bitstring, k: sskey; checksign(sign(m,k), spk(k)) = m.
+
+(* Encryption *)
+fun senc(bitstring, nonce): bitstring.
+reduc forall x: bitstring, y: nonce; sdec(senc(x,y),y) = x.
+
+
+(* Events *)
+free secretANa, secretANb, secretBNa, secretBNb: bitstring [private].
+
+event beginBparam(host, host).
+event endBparam(host, host).
+event beginAparam(host, host).
+event endAparam(host, host).
+event beginBfull(host, host, pkey, pkey, nonce, nonce).
+event endBfull(host, host, pkey, pkey, nonce, nonce).
+event beginAfull(host, host, pkey, pkey, nonce, nonce).
+event endAfull(host, host, pkey, pkey, nonce, nonce).
+
+
+(* Secrecy properties *)
+not attacker(new skA).
+not attacker(new skB).
+not attacker(new skS).
+
+
+(* Processes *)
+let processInitiator(pkS: spkey, skA: skey, skB: skey) =
+    in(c, (xA: host, hostX: host));
+	if xA = A || xA = B then
+	let skxA = if xA = A then skA else skB in
+	let pkxA = pk(skxA) in
+	event beginBparam(xA, hostX); 
+	out(c, (xA, hostX));
+
+	in(c, ms: bitstring); 
+	let (pkX: pkey, =hostX) = checksign(ms,pkS) in
+	new Na: nonce; 
+    out(c, encrypt((Na, xA), pkX));
+
+    in(c, m: bitstring); 
+	let (=Na, NX2: nonce) = decrypt(m, skxA) in
+	event beginBfull(xA, hostX, pkX, pkxA, Na, NX2);
+    out(c, encrypt(nonce_to_bitstring(NX2), pkX));
+
+	if hostX = B || hostX = A then
+	event endAparam(xA, hostX);
+	event endAfull(xA, hostX, pkX, pkxA, Na, NX2);
+	out(c, senc(secretANa, Na));
+	out(c, senc(secretANb, NX2)).
+    
+let processResponder(pkS: spkey, skA: skey, skB: skey) =
+    in(c, xB: host);
+	if xB = A || xB = B then
+	let skxB = if xB = A then skA else skB in
+	let pkxB = pk(skxB) in
+
+	in(c, m: bitstring);
+	let (NY: nonce, hostY: host) = decrypt(m, skxB) in
+	event beginAparam(hostY, xB);
+
+    out(c, (xB, hostY));
+
+	in(c,ms: bitstring);
+    let (pkY: pkey,=hostY) = checksign(ms,pkS) in
+
+	new Nb: nonce;
+	event beginAfull(hostY, xB, pkxB, pkY, NY, Nb);
+	out(c, encrypt((NY, Nb), pkY));
+
+	in(c, m3: bitstring);
+    if nonce_to_bitstring(Nb) = decrypt(m3, skB) then
+
+    if hostY = A || hostY = B then
+	event endBparam(hostY, xB);
+	event endBfull(hostY, xB, pkxB, pkY, NY, Nb);
+	out(c, senc(secretBNa, NY));
+	out(c, senc(secretBNb, Nb)).
+
+let processS(skS: sskey) =  
+    in(c,(a: host, b: host)); 
+	get keys(=b, sb) in
+    out(c,sign((sb,b),skS)).
+
+let processK =
+    in(c, (h: host, k: pkey));
+    if h <> A && h <> B then insert keys(h,k).
+
+
+(* Main process *)
+process new skA: skey; 
+	let pkA = pk(skA) in
+    out(c, pkA);
+
+	insert keys(A, pkA);
+    new skB: skey; 
+
+	let pkB = pk(skB) in
+    
+    out(c, pkB);
+	insert keys(B, pkB);
+	new skS: sskey; 
+	
+    let pkS = spk(skS) in
+	out(c, pkS);
+	(
+        (!processInitiator(pkS, skA, skB)) | 
+        (!processResponder(pkS, skA, skB)) |
+        (!processS(skS)) |
+	    (!processK)
+    )
