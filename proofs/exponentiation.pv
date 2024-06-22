@@ -1,0 +1,31 @@
+type G.
+type exponent.
+
+fun exp(G, exponent): G.
+const g: G [data].
+equation forall x: exponent, y: exponent; exp(exp(g,x),y) = exp(exp(g,y),x).
+
+fun enc(bitstring, G): bistring.
+reduc forall m: bistring, k: G; dec(enc(m, k), k) = m.
+
+
+free m: bitstring [private].
+
+let A() =
+    new a: exponent;
+    out(c,exp(g, a));
+    in(c,yb: G);
+    let k = exp(yb, a) in
+    out(c, enc(s,k)).
+
+let B() =
+    in(c, ya: G);
+    new b: exponent;
+    let k = exp(ya, b) in out(c,exp(g, b));
+    in (c,m: bitstring);
+    let s2 = dec(m,k) in 0.
+
+process
+    ((!A()) | (!B()))
+
+query attacker(m).

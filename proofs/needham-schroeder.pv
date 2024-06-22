@@ -1,4 +1,15 @@
-(* Needham-Schroeder public key protocol *)
+(* 
+Needham-Schroeder public key protocol;
+
+Message 1: A -> S : (A, B) Message
+Message 2: S -> A : { pkB, B }skS Message
+Message 3: A -> B : { Na, A }pkB Message
+Message 4: B -> S : (B, A) Message
+Message 5: S -> B : { pkA, A }skS Message
+Message 6: B -> A : { Na, Nb }pkA Message
+Message 7: A -> B : { Nb }pkB Message
+*)
+
 
 free c: channel.
 
