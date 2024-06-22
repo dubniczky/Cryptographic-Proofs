@@ -1,0 +1,70 @@
+(* Diffie-Hellman types and methods for calculation *)
+type G.
+type exponent.
+
+fun exp(G, exponent): G.
+equation forall x: exponent, y: exponent; exp(exp(g,x),y) = exp(exp(g,y),x).
+
+(* Symmetric encryption types and methods *)
+type key.
+
+fun enc(bitstring, key): bistring.
+reduc forall m: bistring, k: key; dec(enc(m, k), k) = m.
+
+
+free m: bitstring [private].
+
+
+(* Processes *)
+let A() =
+    new a: exponent;
+    out(c,exp(g, a));
+    in(c,yb: G);
+    let k = exp(yb, a) in
+    out(c, enc(s,k)).
+
+let B() =
+    in(c, ya: G);
+    new b: exponent;
+    let k = exp(ya, b) in out(c,exp(g, b));
+    in (c,m: bitstring);
+    let s2 = dec(m,k) in 0.
+
+
+(* Main process *)
+process
+    ((!A()) | (!B()))
+
+
+(* Diffie-Hellman types and methods for calculation *)
+type G.
+type exponent.
+
+fun exp(G, exponent): G.
+equation forall x: exponent, y: exponent; exp(exp(g,x),y) = exp(exp(g,y),x).
+
+(* Symmetric encryption types and methods *)
+type key.
+
+fun enc(bitstring, key): bistring.
+reduc forall m: bistring, k: key; dec(enc(m, k), k) = m.
+
+
+free m: bitstring [private].
+
+(* With these both parties can execute a DH like so *)
+let alice =
+    new a: exponent;
+    out(c, exp(g,a));
+    in(c, gb: G);
+    let key = exp(gb,a) in
+    0.
+
+let bob =
+    new b: exponent;
+    out(c, exp(g,b));
+    in(c, ga: G);
+    let key = exp(ga,b) in
+    0.
+
+query attacker(m).
